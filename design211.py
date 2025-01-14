@@ -35,21 +35,47 @@ word in search consist of '.' or lowercase English letters.
 There will be at most 2 dots in word for search queries.
 At most 104 calls will be made to addWord and search.
 '''
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.endOfWord = False
 class WordDictionary:
 
     def __init__(self):
-        self.wordDic = []
+        self.root = TrieNode()
+        
 
     def addWord(self, word: str) -> None:
-        self.wordDic.append(word)
+        curr = self.root
+        for c in word:
+            if c not in curr.children:
+                curr.children[c] = TrieNode()
+            curr = curr.children[c]
+        curr.endOfWord = True
 
     def search(self, word: str) -> bool:
-        pattern = re.compile("^{word}$")
+        def dfs(index, node):
+            curr = node
+            for i in range(index, len(word)):
+                char = word[i]
+                if char == '.':  # Wildcard case
+                    for child in curr.children.values():
+                        if dfs(i + 1, child):  # Explore all possible paths
+                            return True
+                    return False  # No valid path for the wildcard
+                else:
+                    if char not in curr.children:
+                        return False
+                    curr = curr.children[char]
+            return curr.endOfWord  # Check if it's the end of a valid word
 
-        for w in self.wordDic:
-            if pattern.match(w):
-                return True
-        return False
+        return dfs(0, self.root)
+
+
+# Your WordDictionary object will be instantiated and called as such:
+# obj = WordDictionary()
+# obj.addWord(word)
+# param_2 = obj.search(word)
 
 
 # Your WordDictionary object will be instantiated and called as such:
