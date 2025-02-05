@@ -27,58 +27,60 @@ from typing import List
 class Solution:
     def solveSudoku(self, board: List[List[str]]) -> None:
         """
-        Solves the Sudoku puzzle in-place using backtracking.
+        Solves the Sudoku puzzle in-place using optimized backtracking.
         """
         def is_valid(row, col, num):
             """Check if `num` can be placed at board[row][col]."""
-            return (num not in rows[row] and
-                    num not in cols[col] and
-                    num not in squares[(row // 3, col // 3)])
+            return not (rows[row][num] or cols[col][num] or squares[(row // 3, col // 3)][num])
                 
         def insert(row, col, num):
             """Insert `num` into the board and tracking sets."""
             board[row][col] = str(num)
-            rows[row].add(num)
-            cols[col].add(num)
-            squares[(row // 3, col // 3)].add(num)
+            rows[row][num] = True
+            cols[col][num] = True
+            squares[(row // 3, col // 3)][num] = True
 
         def remove(row, col, num):
             """Remove `num` (backtrack) from board and tracking sets."""
             board[row][col] = "."
-            rows[row].remove(num)
-            cols[col].remove(num)
-            squares[(row // 3, col // 3)].remove(num)
+            rows[row][num] = False
+            cols[col][num] = False
+            squares[(row // 3, col // 3)][num] = False
 
-        def backtrack():
-            """Backtracking function to solve Sudoku."""
-            for r in range(9):
-                for c in range(9):
-                    if board[r][c] == ".":
-                        for num in range(1, 10):  # Try numbers 1-9
-                            if is_valid(r, c, num):
-                                insert(r, c, num)
+        def backtrack(index):
+            """Backtracking function to solve Sudoku using precomputed empty cells."""
+            if index == len(empty_cells):  # Base case: all cells filled
+                return True
+            
+            row, col = empty_cells[index]
+            for num in range(1, 10):  # Try numbers 1-9
+                if is_valid(row, col, num):
+                    insert(row, col, num)
+                    
+                    if backtrack(index + 1):  # Recursive call
+                        return True
+                    
+                    remove(row, col, num)  # Undo move (backtrack)
+            
+            return False  # No valid number found, backtrack
 
-                                if backtrack():  # Recursive call
-                                    return True
-                                
-                                remove(r, c, num)  # Undo move (backtrack)
-                        
-                        return False  # No valid number found, backtrack
-            return True  # Sudoku is solved
+        # Use boolean arrays instead of sets for quick lookup
+        rows = [collections.defaultdict(bool) for _ in range(9)]
+        cols = [collections.defaultdict(bool) for _ in range(9)]
+        squares = {(i, j): collections.defaultdict(bool) for i in range(3) for j in range(3)}
+        
+        empty_cells = []
 
-        # Initialize tracking sets for rows, columns, and 3×3 subgrids
-        rows = collections.defaultdict(set)
-        cols = collections.defaultdict(set)
-        squares = collections.defaultdict(set)
-
-        # Populate sets with existing numbers
+        # Populate sets with existing numbers and track empty cells
         for r in range(9):
             for c in range(9):
-                if board[r][c] != ".":
-                    num = int(board[r][c])  # Convert string to integer
-                    rows[r].add(num)
-                    cols[c].add(num)
-                    squares[(r // 3, c // 3)].add(num)
+                if board[r][c] == ".":
+                    empty_cells.append((r, c))  # Store empty cell positions
+                else:
+                    num = int(board[r][c])
+                    rows[r][num] = True
+                    cols[c][num] = True
+                    squares[(r // 3, c // 3)][num] = True
 
-        # Start solving Sudoku
-        backtrack()
+        # Start solving Sudoku using backtracking with empty cell list
+        backtrack(0)
