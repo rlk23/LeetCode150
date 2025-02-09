@@ -31,10 +31,18 @@ Constraints:
 
 class Solution:
     def countBadPairs(self, nums: List[int]) -> int:
-        count = 0
+        n = len(nums)
 
-        for i in range(len(nums)):
-            for j in range(len(nums)):
-                if i < j and (nums[i] - i != nums[j] - j):
-                    count += 1
-        return count
+        total_pairs = n * (n-1) // 2
+
+        value_count = defaultdict(int)
+        good_pairs = 0
+
+        for i, num in enumerate(nums):
+            key = i - num
+            good_pairs += value_count[key]
+            value_count[key] += 1
+        
+
+        bad_pairs = total_pairs - good_pairs
+        return bad_pairs
