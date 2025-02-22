@@ -49,14 +49,27 @@ Follow-up: Could you find a solution with O(n) time complexit
 '''
 class Solution:
     def subArrayRanges(self, nums: List[int]) -> int:
-            n = len(nums)
-            total_sum = 0
+        n = len(nums)
+
+
+        def count_contribution(is_max):
+            stack = []
+            left = [0] * n
+            right = [0] * n
             
             for i in range(n):
-                min_val = max_val = nums[i]
-                for j in range(i, n):
-                    min_val = min(min_val, nums[j])
-                    max_val = max(max_val, nums[j])
-                    total_sum += max_val - min_val  # Add range of this subarray
-            
-            return total_sum
+                while stack and (nums[stack[-1]] < nums[i] if is_max else nums[stack[-1]] > nums[i]):
+                    stack.pop()
+                left[i] = i - stack[-1] if stack else i + 1
+                stack.append(i)
+
+            stack.clear()
+
+            for i in range(n-1,-1,-1):
+                while stack and (nums[stack[-1]] <= nums[i] if is_max else nums[stack[-1]] >= nums[i]):
+                    stack.pop()
+                right[i] = stack[-1] - i if stack else n - i
+                stack.append(i)
+            return sum(nums[i] * left[i] * right[i] for i in range(n))
+
+        return count_contribution(True) - count_contribution(False)
