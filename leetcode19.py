@@ -35,20 +35,28 @@ Follow up: Could you do this in one pass?
 #     def __init__(self, val=0, next=None):
 #         self.val = val
 #         self.next = next
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
 class Solution:
     def removeNthFromEnd(self, head: Optional[ListNode], n: int) -> Optional[ListNode]:
         dummy = ListNode(0,head)
-        left = dummy
-        right = head
+        curr = head
 
-        while n > 0 and right:
-            n -= 1
-            right = right.next
+        length = 0
 
-        while right:
-            right = right.next
-            left = left.next
+        while curr:
+            length += 1
+            curr = curr.next
+        k = length - n
+
+        curr = dummy
+        for _ in range(k):
+            curr = curr.next
         
-        left.next = left.next.next
-
+        to_delete = curr.next
+        curr.next = to_delete.next
+        to_delete.next = None
         return dummy.next
