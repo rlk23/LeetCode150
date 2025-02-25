@@ -26,18 +26,44 @@ Constraints:
 words[i] consists of lowercase English letters.
 '''
 
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.isAtEnd = False
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+    
+    def insert(self, word):
+        node = self.root
+        for c in word:
+            if c not in node.children:
+                node.children[c] = TrieNode()
+            node = node.children[c]
+        node.isAtEnd = True
+
+    def longest_word(self):
+        stack = [(self.root, "")]  # (current node, word formed so far)
+        result = ""
+
+        while stack:
+            node, word = stack.pop()
+
+            if len(word) > len(result) or (len(word) == len(result ) and word < result):
+                result = word
+            
+            for char in sorted(node.children.keys(), reverse=True):
+                if node.children[char].isAtEnd:
+                    stack.append((node.children[char], word + char))
+
+        return result
+
+
+
 class Solution:
     def longestWord(self, words: List[str]) -> str:
-        words.sort()
-
-        hashSet = set()
-
-        longestWord = ""
-
+        trie = Trie()
         for word in words:
-            if len(word) == 1 or word[:-1] in hashSet:
-                hashSet.add(word)
+            trie.insert(word)
 
-                if len(word) > len(longestWord):
-                    longestWord = word
-        return longestWord
+        return trie.longest_word()
