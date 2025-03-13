@@ -28,55 +28,57 @@ All the strings of words are unique.
 
 '''
 
+from typing import List
+
 class Trie:
     def __init__(self):
         self.children = {}
         self.isAtEnd = False
 
-        
-
-
 class Solution:
+    def insert_into_trie(self, word, root):
+        curr = root
+        for c in word:
+            if c not in curr.children:
+                curr.children[c] = Trie()
+            curr = curr.children[c]
+        curr.isAtEnd = True  
 
-    def build_trie(self, words):
-        root = Trie()  # Initialize Trie root
-
-        for word in words:  # Loop through each word in the list
-            curr = root  # Start at root
-
-            for c in word:  # Iterate over each character in the word
-                if c not in curr.children:
-                    curr.children[c] = Trie()  # Create a new Trie node if not exists
-                curr = curr.children[c]  # Move to the next node
-            
-            curr.isAtEnd = True  # Mark end of word
-        
-        return root  
-
-    def can_form(self,word, index, root,count):
+    def can_form(self, index, word, root, memo, count):
         if index == len(word):
-            return count >= 2
-        
-        curr  = root
+            return count >= 2  
+
+        if index in memo:  
+            return memo[index]
+
+        curr = root
         for i in range(index, len(word)):
             if word[i] not in curr.children:
-                return False  # No valid path in Trie
+                memo[index] = False  
+                return False
             curr = curr.children[word[i]]
 
             if curr.isAtEnd:
-                if self.can_form(word, i+1, root, count+1):
+                if self.can_form(i+1, word, root, memo, count+1):
+                    memo[index] = True  
                     return True
+
+        memo[index] = False
         return False
 
-
     def findAllConcatenatedWordsInADict(self, words: List[str]) -> List[str]:
-        root = self.build_trie(words)
+        words.sort(key=len)  
+        trie = Trie()
         result = []
 
         for word in words:
-            if self.can_form(word, 0, root, 0):
+            if self.can_form(0, word, trie, {}, 0):  
                 result.append(word)
+            else:
+                self.insert_into_trie(word, trie)  
+
         return result
+
 
 
 
