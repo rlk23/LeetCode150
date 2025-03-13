@@ -45,98 +45,58 @@ lfu.get(4);      // return 4
 
 '''
 
-from collections import defaultdict
-
-class Node:
-    def __init__(self, key, value):
-        self.key = key
-        self.value = value
-        self.freq = 1  # Frequency starts at 1 upon insertion
-        self.prev = None
-        self.next = None
-
-class DoublyLinkedList:
-    def __init__(self):
-        self.head = Node(-1, -1)  # Dummy head
-        self.tail = Node(-1, -1)  # Dummy tail
-        self.head.next = self.tail
-        self.tail.prev = self.head
-
-    def add_to_front(self, node):
-        # Insert node right after head
-        node.next = self.head.next
-        node.prev = self.head
-        self.head.next.prev = node
-        self.head.next = node
-
-    def remove(self, node):
-        # Remove the node from the list
-        node.prev.next = node.next
-        node.next.prev = node.prev
-        node.prev = None
-        node.next = None
-        return node
-
-    def remove_last(self):
-        # Remove the least recently used node (before tail)
-        if self.is_empty():
-            return None
-        return self.remove(self.tail.prev)
-
-    def is_empty(self):
-        return self.head.next == self.tail
+from collections import defaultdict, OrderedDict
 
 class LFUCache:
-
     def __init__(self, capacity: int):
         self.capacity = capacity
-        self.size = 0
         self.min_freq = 0
-        self.key_node_map = {}  # Maps key to node
-        self.freq_list_map = defaultdict(DoublyLinkedList)  # Maps frequency to DoublyLinkedList
+        self.key_value_map = {}  # Stores key -> value
+        self.key_freq_map = {}   # Stores key -> frequency
+        self.freq_list_map = defaultdict(OrderedDict)  # Stores frequency -> {key: None} (OrderedDict maintains LRU order)
 
     def get(self, key: int) -> int:
-        if key not in self.key_node_map or self.capacity == 0:
+        if key not in self.key_value_map or self.capacity == 0:
             return -1
         
-        node = self.key_node_map[key]
-        self._update_frequency(node)
-        return node.value
+        # Update frequency
+        self._update_frequency(key)
+        return self.key_value_map[key]
 
     def put(self, key: int, value: int) -> None:
         if self.capacity == 0:
             return
         
-        if key in self.key_node_map:
-            # Update existing node's value and frequency
-            node = self.key_node_map[key]
-            node.value = value
-            self._update_frequency(node)
+        if key in self.key_value_map:
+            self.key_value_map[key] = value
+            self._update_frequency(key)
         else:
-            if self.size == self.capacity:
-                # Evict the least frequently used (and least recently used) node
-                lfu_list = self.freq_list_map[self.min_freq]
-                node_to_remove = lfu_list.remove_last()
-                if node_to_remove:
-                    del self.key_node_map[node_to_remove.key]
-                    self.size -= 1
+            if len(self.key_value_map) == self.capacity:
+                self._evict_least_frequent()
 
-            # Insert new node
-            new_node = Node(key, value)
-            self.key_node_map[key] = new_node
-            self.freq_list_map[1].add_to_front(new_node)
-            self.min_freq = 1
-            self.size += 1
+            # Insert new key with frequency 1
+            self.key_value_map[key] = value
+            self.key_freq_map[key] = 1
+            self.freq_list_map[1][key] = None
+            self.min_freq = 1  # Reset min frequency to 1
 
-    def _update_frequency(self, node):
-        freq = node.freq
-        self.freq_list_map[freq].remove(node)
+    def _update_frequency(self, key):
+        freq = self.key_freq_map[key]
+        del self.freq_list_map[freq][key]  # Remove key from current frequency list
 
-        if self.freq_list_map[freq].is_empty():
+        if not self.freq_list_map[freq]:  # If no keys left at this frequency
             del self.freq_list_map[freq]
             if self.min_freq == freq:
-                self.min_freq += 1
+                self.min_freq += 1  # Update min frequency
 
-        # Increment frequency and move to new frequency list
-        node.freq += 1
-        self.freq_list_map[node.freq].add_to_front(node)
+        # Move key to the next frequency level
+        self.key_freq_map[key] += 1
+        new_freq = self.key_freq_map[key]
+        self.freq_list_map[new_freq][key] = None  # Add key to new frequency list
+
+    def _evict_least_frequent(self):
+        # Remove the least frequently used (LFU) key with lowest min_freq
+        key, _ = self.freq_list_map[self.min_freq].popitem(last=False)  # Remove first (LRU) item
+        del self.key_value_map[key]
+        del self.key_freq_map[key]
+
