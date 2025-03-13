@@ -40,12 +40,22 @@ s consists of lowercase English letters.
 
 class Solution:
     def appealSum(self, s: str) -> int:
-        substrings = [s[i:j] for i in range(len(s)) for j in range(i + 1, len(s) + 1)]
+        last_seen = {}  # Stores the last index where each character appeared
+        total_appeal = 0
+        current_sum = 0  # Tracks contribution of unique characters
 
-
-        count = 0
-
-        for sub in substrings:
-            count += len(set(sub))
-
-        return count
+        for i, char in enumerate(s):
+            # Remove previous contribution of this character
+            if char in last_seen:
+                current_sum -= last_seen[char]  # Remove old index contribution
+            
+            # Add new contribution
+            current_sum += i + 1  # Add new index contribution
+            
+            # Update last seen position
+            last_seen[char] = i + 1
+            
+            # Accumulate the appeal sum
+            total_appeal += current_sum
+        
+        return total_appeal
