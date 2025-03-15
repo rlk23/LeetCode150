@@ -29,34 +29,39 @@ Explanation: Since there are already no fresh oranges at minute 0, the answer is
 
 '''
 
+from typing import List
+from collections import deque
+
 class Solution:
     def orangesRotting(self, grid: List[List[int]]) -> int:
-        
         rows, cols = len(grid), len(grid[0])
-        queue = collections.deque()
-        fresh_count = 0
 
+        fresh_count = 0
+        queue = deque()
+
+        # Initialize the queue with all initially rotten oranges
         for r in range(rows):
             for c in range(cols):
-                if grid[r][c] == 0:
-                    continue
-                elif grid[r][c] == 2:
-                    queue.append((r,c,0))
+                if grid[r][c] == 2:
+                    queue.append((r, c, 0))  # Add (row, col, time)
                 elif grid[r][c] == 1:
-                    fresh_count +=1
-        
+                    fresh_count += 1  # Count fresh oranges
 
-        directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
         time = 0
+        directions = [[1, 0], [0, 1], [-1, 0], [0, -1]]
 
+        # BFS traversal
         while queue:
-            r, c, time = queue.popleft()
+            r, c, curr_time = queue.popleft()  # Extract current time from the queue
+            time = max(time, curr_time)  # Update time with the maximum value
 
-            for dr , dc in directions:
-                new_x, new_y = dr + r, dc +c 
+            for dr, dc in directions:
+                new_x, new_y = r + dr, c + dc
 
                 if 0 <= new_x < rows and 0 <= new_y < cols and grid[new_x][new_y] == 1:
-                    grid[new_x][new_y] = 2
+                    grid[new_x][new_y] = 2  # Rot the fresh orange
                     fresh_count -= 1
-                    queue.append((new_x,new_y,time+1))
-        return time if fresh_count == 0 else - 1
+                    queue.append((new_x, new_y, curr_time + 1))  # Increment time
+
+        return time if fresh_count == 0 else -1  # If all fresh oranges are rotten, return time; otherwise, return -1
+
