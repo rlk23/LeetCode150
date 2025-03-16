@@ -36,10 +36,14 @@ logs[i] is guaranteed to have an identifier and at least one word after the iden
 '''
 class Solution:
     def reorderLogFiles(self, logs: List[str]) -> List[str]:
-        def sort_key(log):
-            identifier, content = log.split(" ", 1)  # Split only once
-            if content[0].isdigit():
-                return (1,)  # Digit-logs are placed at the end, maintaining order
-            return (0, content, identifier)  # Sort by content, then by identifier
+        letter_logs = []
+        digit_logs = []
 
-        return sorted(logs, key=sort_key)
+        for log in logs:
+            if log.split()[1][0].isdigit():
+                digit_logs.append(log)
+            else:
+                letter_logs.append(log)
+
+        letter_logs.sort(key=lambda log: (log.split(" ", 1)[1], log.split()[0]))
+        return letter_logs + digit_logs
