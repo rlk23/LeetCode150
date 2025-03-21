@@ -31,32 +31,44 @@ Follow up: Could you do it in O(n) time and O(1) space?
 #     def __init__(self, val=0, next=None):
 #         self.val = val
 #         self.next = next
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
 class Solution:
     def isPalindrome(self, head: Optional[ListNode]) -> bool:
         if not head or not head.next:
-            return True  # Edge case: Empty list or single node is always a palindrome
-        
-        # Step 1: Find the middle of the linked list using slow & fast pointers
-        slow, fast = head, head
+
+            return True
+
+        res = True
+
+        slow, fast = head,head
+
         while fast and fast.next:
             slow = slow.next
             fast = fast.next.next
+        
+        second_half = self.reverse(slow)
 
-        # Step 2: Reverse the second half of the list
+        first, second = head, second_half
+        while second:
+            if first.val != second.val:
+                return False
+            first = first.next
+            second = second.next
+
+        return True
+
+
+    def reverse(self,head):
         prev = None
-        curr = slow  # Start reversing from the middle
+        curr = head
         while curr:
             next_node = curr.next
             curr.next = prev
             prev = curr
             curr = next_node
-        
-        # Step 3: Compare first half with the reversed second half
-        left, right = head, prev  # prev is now the head of the reversed second half
-        while right:  # Only need to check the second half
-            if left.val != right.val:
-                return False
-            left = left.next
-            right = right.next
 
-        return True
+        return prev
